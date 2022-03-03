@@ -1,3 +1,14 @@
 body {
       font-family: 'Open Sans', sans-serif;
 }
+.Change {
+      fill: blueviolet;
+    }
+
+.changerayon{
+      r:80px;
+}
+
+/* .donut:hover {
+      r: 100px;
+} */
