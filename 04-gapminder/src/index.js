@@ -1,7 +1,9 @@
 import * as d3 from 'd3'
-import allpib from '../data/income_per_person_gdppercapita_ppp_inflation_adjusted.csv' //PIB par habitant par pays et pour chaque année depuis 1800
-import lifeEsper from '../data/life_expectancy_years.csv' //espérance de vie par pays et pour chaque année depuis 1800
-import population from '../data/population_total.csv' //population depuis 1800 par pays 
+import allpib from '../data/income_per_person_gdppercapita_ppp_inflation_adjusted.csv' 
+import lifeEsper from '../data/life_expectancy_years.csv'
+import population from '../data/population_total.csv' 
+import "./index.css"
+
 
 //data du nbPopulation de 2021
 
@@ -22,7 +24,7 @@ allpib.forEach(pays => {
     }
 })
 
-//data les plus récentes
+//data les plus récentes 
 lifeEsper.forEach(pays => {
     if (pays[2021] == null) {
         let i = 2021
@@ -34,31 +36,38 @@ lifeEsper.forEach(pays => {
     }
 })
 
-
-const margin = { top: 10, right: 20, bottom: 30, left: 50 }
-const width = 1500 - margin.left - margin.right
-const height = 600 - margin.top - margin.bottom
-
-
 d3.select("body")
     .append("div")
     .attr('id', 'graph-stat-country')
 
+//taille en fonction de la largeur de la fenêtre
+let wDiv = document.querySelector("#graph-stat-country").offsetWidth
+let hDiv = document.querySelector("#graph-stat-country").offsetHeight
+
+const margin = { top: 50, right: 50, bottom: 50, left: 50 }
+const width = wDiv - margin.left - margin.right
+const height = hDiv - margin.top - margin.bottom
+
+//svg 
 const svg = d3.select("#graph-stat-country")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom + 200)
+    .attr("height", height + margin.top + margin.bottom + 100)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
+
+//rectangle pour couleur de fond
 svg.append("rect")
+    //position
     .attr("x", 0)
     .attr("y", 0)
+    //coins du rectangle
     .attr("height", height)
     .attr("width", width)
     .style("fill", "#151F30")
 
-//axe x
+//dimensions de l'axe x
 let maxPib = 0
 allpib.forEach(pibByYear => {
     if (pibByYear[2021] > maxPib) {
@@ -67,7 +76,7 @@ allpib.forEach(pibByYear => {
 })
 console.log("le pib par habitant le plus élevé est de : ", maxPib)
 
-//axe y
+//dimensions de l'axe y
 let maxLifeLength = 0
 lifeEsper.forEach(lifeEsperByYear => {
     if (lifeEsperByYear[2021] > maxLifeLength) {
@@ -76,7 +85,7 @@ lifeEsper.forEach(lifeEsperByYear => {
 })
 console.log("la plus longue espérence de vie est de : ", maxLifeLength, " ans ")
 
-//définir le max et le min de population dans un pays en 2021
+//max et min de population 
 let maxPop = 0
 let minPop = 0
 population.forEach(pays => {
@@ -94,7 +103,7 @@ console.log("Le plus petit nombre de personne réunit dans un pays en 2021 est d
 
 
 //échelle de l'axe x
-let x = d3.scaleLinear()
+let x = d3.scaleSqrt()
     .domain([0, maxPib * 1.05])
     .range([0, width])
     .nice()
@@ -111,32 +120,36 @@ let sqrtScale = d3.scaleSqrt()
     .domain([minPop, maxPop])
     .range([5, 20]);
 
-//axe X selon l'échelle 
+
+//dessiner l'axe X
 svg.append("g")
+    //translation de l'axe pour le positionner au bon endroit, en l'occurence descendre le graphe de sa taille en y 
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x))
-    .call(d3.axisBottom(x).tickSize(-height * 1.3).ticks(10))
+    .call(d3.axisBottom(x).tickSize(-height).tickFormat(d3.format('~s')))
 
-//axe y selon l'échelle
-svg.append("g").call(d3.axisLeft(y)).call(d3.axisLeft(y).tickSize(-width * 1.3).ticks(10))
+//dessiner l'axe y
+svg.append("g").call(d3.axisLeft(y)).call(d3.axisLeft(y).tickSize(-width))
 
-//lignes
+
+//apparance des lignes
 svg.selectAll(".tick line").attr("stroke", "white").attr("opacity", "0.3")
 
 //description axe X 
 svg.append("text")
     .attr("text-anchor", "end")
-    .attr("x", width / 2 + margin.left)
-    .attr("y", height + margin.top + 30)
-    .text("PIB par habitant [CHF]");
+    .attr("x", wDiv / 2 + margin.left)
+    .attr("y", height + margin.top)
+    .text("Log du PIB par habitant [CHF]");
 
 //description axe Y
 svg.append("text")
     .attr("text-anchor", "end")
     .attr("transform", "rotate(-90)")
     .attr("y", -margin.left + 20)
-    .attr("x", -margin.top - height / 2 + 20)
+    .attr("x", -margin.top - height / 2 + 100)
     .text("Espérance de vie")
+
 
 //cercles
 svg.append('g')
@@ -155,12 +168,103 @@ svg.append('g')
     .attr("opacity", "0.7")
     .attr("stroke", "black")
 
+
+d3.select("body").append("h3")
+    .attr('id', 'separateur')
+    .text("Let's give a look of l'espérance de vie sur une map choroplète...")
+
+
+d3.select("body").append("Mapdiv")
+    .attr("id", "map")
+
+const Mapmargin = { top: 20, right: 20, bottom: 30, left: 50 }
+const Mapwidth = 650 - Mapmargin.left - Mapmargin.right
+const Mapheight = 500 - Mapmargin.top - Mapmargin.bottom
+
+const Mapsvg = d3.select("#map")
+    .append("svg")
+    .attr("width", Mapwidth + Mapmargin.left + Mapmargin.right)
+    .attr("height", Mapheight + Mapmargin.top + Mapmargin.bottom + 100)
+    .append("g")
+    .attr("transform", "translate(" + Mapmargin.left + "," + Mapmargin.top + ")")
+
+
+//Optimisation des données
+let listPays = []
+lifeEsper.forEach(pays => {
+    let paysD = {}
+    paysD[pays['country']] = pays['2021']
+    listPays.push(paysD)
+})
+
+
+//projection
+let path = d3.geoPath()
+let projection = d3.geoMercator()
+    .center([0, 20])
+    .scale(90)
+    .translate([Mapwidth / 2, Mapheight / 2])
+
+
+let data = new Map()
+let thresholdScale = d3.scaleThreshold()
+    .domain([50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100])
+    .range(d3.schemeOranges[8])
+
+
+//map
+d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(function (d) {
+    Mapsvg.append('g')
+        .selectAll('path')
+        .data(d.features)
+        .join("path")
+        .attr("d", path.projection(projection))
+        .attr("id", function (d) { return d.properties.name; })
+        .attr("fill", function (d) {
+            let number = 0;
+            listPays.forEach(country => {
+                if (typeof country[this.id] != "undefined") {
+                    number = country[this.id]
+                }
+            })
+            return thresholdScale(number);
+        })
+        .attr("class", function (d) { return "Country" })
+        .style("opacity", 1)
+        .on("mouseover", mouseOver)
+        .on("mouseleave", mouseLeave)
+})
+
+
+//hover
+let mouseOver = function (d) {
+    d3.selectAll(".Country")
+        .transition()
+        .duration(200)
+        .style("opacity", .5)
+    d3.select(this)
+        .transition()
+        .duration(200)
+        .style("opacity", 1)
+}
+
+let mouseLeave = function (d) {
+    d3.selectAll(".Country")
+        .transition()
+        .duration(200)
+        .style("opacity", 1)
+    d3.select(this)
+        .transition()
+        .duration(200)
+        .style("stroke", "transparent")
+}
+
+
 //string en int
 function strToInt(str) {
     let number
     let onlyNumber
     if (str.slice(-1) == 'M') {
-        //enlever le dernier caractère, ici le M
         onlyNumber = str.substring(0, str.length - 1)
         number = Number(onlyNumber)
         number = number * 1000000
